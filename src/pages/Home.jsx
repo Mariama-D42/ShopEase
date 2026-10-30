@@ -1,14 +1,30 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+
 import { Link, useSearchParams } from 'react-router-dom';
-import { products } from '../data.js';
+
+import { getProducts } from '../api.js';
 import { fcfa } from '../utils.js';
 import { useCart } from '../CartContext.jsx';
-import Reassurance from "../components/Reassurance.jsx";
-import './Home.css';
 
 export default function Home() {
   const [params] = useSearchParams();
   const [showAll, setShowAll] = useState(false);
+  const [products, setProducts] = useState([]);
+
+const [loading, setLoading] = useState(true);
+
+const [error, setError] = useState('');
+useEffect(() => {
+
+  getProducts()
+
+    .then((data) => setProducts(data))
+
+    .catch(() => setError('Impossible de charger les produits.'))
+
+    .finally(() => setLoading(false));
+
+}, []);
   const q = params.get('q') || '';
   const cat = params.get('cat') || '';
   const { add } = useCart();
@@ -25,15 +41,21 @@ export default function Home() {
 
   return (
     <>
+    {loading && <p>Chargement des produits...</p>}
+
+{error && <p>{error}</p>}
       {cat && (
         <p>
           Catégorie : <strong>{cat}</strong> · <Link to="/">Tout afficher</Link>
         </p>
       )}
-      {!filtered.length && <p>Aucun produit ne correspond à ta recherche.</p>}
+{!loading && !error && filtered.length === 0 && (
 
+  <p>Aucun produit ne correspond à ta recherche.</p>
+
+)}
       <div className="grid" id="produits">
-          {visible.map((p) => (
+        {visible.map((p) => (
           <article className="card" key={p._id}>
             {p.stock < 1 ? (
               <span className="badge out">Épuisé</span>
